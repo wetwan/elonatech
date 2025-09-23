@@ -1,14 +1,20 @@
 "use client";
 
 import axios from "axios";
-import React, { useState } from "react";
+import { redirect, useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+
+import { toast } from "react-toastify";
+import Link from "next/link";
 
 const SignUp = () => {
+  const router = useRouter();
   const [signUp, setSignUp] = useState({
     username: "",
     password: "",
     email: "",
   });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -35,16 +41,40 @@ const SignUp = () => {
     setLoading(true);
     try {
       // signig up
-      const res = await axios.post("http://localhost:5000/api/user/login", {
-        email: signUp.email,
-        password: signUp.password,
-      });
-      const data = res.data;
-      console.log(data, "data");
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/user/register`,
+        {
+          username: signUp.username,
+          email: signUp.email,
+          password: signUp.password,
+        }
+      );
+      if (data.success) {
+        localStorage.setItem("token", data.token);
+
+        toast.success(data.message);
+        router.push("/dashboard");
+      } else {
+        setError(data.message || "Sign up failed. Please try again.");
+        toast.error(data.message);
+      }
     } catch (error) {
-      console.log(error, "error");
+      if (axios.isAxiosError(error) && error.response) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      redirect("/");
+    }
+  }, []);
 
   return (
     <div className="flex justify-center items-center h-screen">
@@ -55,12 +85,16 @@ const SignUp = () => {
           className="capitalize flex flex-col gap-5 placeholder-shown:capitalize placeholder:capitalize"
         >
           <div className="flex flex-col gap-2">
-            <label htmlFor="name">name</label>
+            <label htmlFor="name">Username</label>
             <input
               type="text"
               id="name"
               className="border p-4 rounded-xl placeholder:capitalize placeholder:text-white"
               placeholder="username"
+              value={signUp.username}
+              onChange={(e) =>
+                setSignUp((prev) => ({ ...prev, username: e.target.value }))
+              }
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -96,12 +130,15 @@ const SignUp = () => {
             type="submit"
             className="py-4 bg-blue-500 text-white rounded-xl"
           >
-            {loading ? "Sign up" : "    Signing Up"}
+            {loading ? "Signing up" : "Sign Up"}
           </button>
 
           <div className=" uppercase">
-            Not a user yet{" "}
-            <span className="text-blue-700 cursor-pointer"> sign up</span>{" "}
+            already a user?
+            <Link href={"/Login"} className="text-blue-700 cursor-pointer">
+              {" "}
+              sign in
+            </Link>
           </div>
         </form>
       </div>

@@ -3,33 +3,59 @@
 import React, { useEffect, useState } from "react";
 import AddTAsk from "../(components)/add";
 import axios from "axios";
+import { useRouter } from "next/navigation";
+import { useTaskCreation } from "../context/taskContext";
+import { Task } from "@/types/type";
 
 const Dashboard = () => {
-  const Task = [
-    {
-      name: "task 1",
-      description: "this is task 1",
-      status: "pending",
-    },
-    {
-      name: "task 2",
-      description: "this is task 1",
-      status: "pending",
-    },
-  ];
+  const router = useRouter();
+  const { userToken } = useTaskCreation();
 
+  // const Task = [
+  //   {
+  //     name: "task 1",
+  //     description: "this is task 1",
+  //     status: "pending",
+  //   },
+  //   {
+  //     name: "task 2",
+  //     description: "this is task 1",
+  //     status: "pending",
+  //   },
+  // ];
+  // console.log("token", userToken);
   const [open, setOpen] = useState(false);
-  const [task, setTask] = useState([]);
+  const [task, setTask] = useState<Task[]>([]);
 
   const getTask = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
     try {
-      const res = await axios.get("http://localhost:5000/api/task/taskall");
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/task/taskall`,
+        {
+          headers: {
+            token,
+          },
+        }
+      );
+
+      setTask(res.data.tasks);
       console.log(res.data);
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   useEffect(() => {
     getTask();
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+    }
   }, []);
   const deleteTask = (i: number) => {
     try {
@@ -56,16 +82,16 @@ const Dashboard = () => {
         add task
       </button>
       <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-5  justify-center items-center max-w-7xl mx-auto border p-10 rounded-2xl">
-        {Task.map((task, i) => (
+        {task.map((task) => (
           <div
-            key={i}
+            key={task._id}
             className="p-5  rounded-2xl bg-slate-200 text-blue-500 h-[200px]"
           >
-            <h2>{task.name}</h2>
-            <p className="p-4 text-2xl ">{task.description.slice(0, 20)}</p>
+            <h2>{task?.name}</h2>
+            <p className="p-4 text-2xl ">{task?.description.slice(0, 20)}</p>
 
             <div className="flex items-center gap-3">
-              <p>{task.status === "pending" ? "🤷‍♀️" : "🚀"}</p>
+              <p>{task?.status === "pending" ? "🤷‍♀️" : "🚀"}</p>
               <button className="bg-blue-500 text-white px-4 py-2 rounded-lg">
                 ✓
               </button>

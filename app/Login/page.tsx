@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
+import { toast } from "react-toastify";
+import { useTaskCreation } from "../context/taskContext";
 
 const Login = () => {
   const router = useRouter();
@@ -11,6 +13,7 @@ const Login = () => {
     password: "",
     email: "",
   });
+  const { userToken, setUserToken } = useTaskCreation();
   const [loading, setLoading] = useState(false);
 
   const [error, setError] = useState("");
@@ -19,7 +22,7 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    e.preventDefault();
+    setLoading(true);
     setError("");
 
     if (!login.email || !login.password) {
@@ -36,17 +39,40 @@ const Login = () => {
       return;
     }
 
-    router.push("/home");
     try {
-      const res = await axios.post("http://localhost:5000/api/user/login", {
-        email: login.email,
-        password: login.password,
-      });
-      console.log("✅ User registered:", res.data);
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/user/login`,
+        {
+          email: login.email,
+          password: login.password,
+        }
+      );
+      if (data.success) {
+        localStorage.setItem("token", data.token);
+        toast.success(data.message);
+        router.push("/dashboard");
+      } else {
+        setError(data.message || "Sign up failed. Please try again.");
+        toast.error(data.message);
+      }
     } catch (error) {
-      console.log(error, "error");
+      if (axios.isAxiosError(error) && error.response) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      // Optionally: validate token by calling a backend endpoint
+      router.push("/dashboard"); // redirect if token exists
+    }
+  }, []);
 
   return (
     <div className="flex justify-center items-center h-screen">
@@ -59,7 +85,7 @@ const Login = () => {
               type="email"
               id="email"
               className="border p-4 rounded-xl"
-              placeholder="username"
+              placeholder="email"
               value={login.email}
               onChange={(e) =>
                 setLogin((prev) => ({ ...prev, email: e.target.value }))
@@ -70,7 +96,7 @@ const Login = () => {
             <label htmlFor="password">password</label>
             <input
               type="password"
-              id="email"
+              id="password"
               className="border p-4 rounded-xl"
               placeholder="password"
               value={login.password}
@@ -82,18 +108,15 @@ const Login = () => {
           {error && <p className="text-red-500 p-4">{error}</p>}
           <button
             disabled={loading}
-            type="button"
+            type="submit"
             className="py-4 bg-blue-500 text-white rounded-xl"
           >
-            Login
+            {loading ? "signing in" : "sign in"}
           </button>
 
           <div className=" uppercase">
-            Not a user yet
-            <Link
-              href={"../SignUp/page"}
-              className="text-blue-700 cursor-pointer"
-            >
+            Not a user yet?
+            <Link href={"/SignUp"} className="text-blue-700 cursor-pointer">
               {" "}
               sign up
             </Link>
