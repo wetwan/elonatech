@@ -79,7 +79,7 @@ const Login = () => {
               }
             />
           </div>
-
+          {error && <p className="text-red-500 p-4">{error}</p>}
           <button
             disabled={loading}
             type="button"

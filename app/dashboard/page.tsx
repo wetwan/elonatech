@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import AddTAsk from "../(components)/add";
+import axios from "axios";
 
 const Dashboard = () => {
   const Task = [
@@ -18,6 +19,27 @@ const Dashboard = () => {
   ];
 
   const [open, setOpen] = useState(false);
+  const [task, setTask] = useState([]);
+
+  const getTask = async (i: number) => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/user/login");
+      console.log(res.data);
+    } catch (error) {}
+  };
+  const deleteTask = (i: number) => {
+    try {
+    } catch (error) {}
+  };
+  const editTask = (i: number) => {
+    try {
+    } catch (error) {}
+  };
+  const completeTask = (i: number) => {
+    try {
+    } catch (error) {}
+  };
+
   return (
     <div>
       <h1 className="my-5 font-bold text-2xl capitalize">Dashboard page</h1>
