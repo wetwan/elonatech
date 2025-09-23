@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AddTAsk from "../(components)/add";
 import axios from "axios";
 
@@ -21,12 +21,16 @@ const Dashboard = () => {
   const [open, setOpen] = useState(false);
   const [task, setTask] = useState([]);
 
-  const getTask = async (i: number) => {
+  const getTask = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/user/login");
+      const res = await axios.get("http://localhost:5000/api/task/taskall");
       console.log(res.data);
     } catch (error) {}
   };
+
+  useEffect(() => {
+    getTask();
+  }, []);
   const deleteTask = (i: number) => {
     try {
     } catch (error) {}
