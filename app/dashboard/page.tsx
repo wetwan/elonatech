@@ -2,113 +2,134 @@
 
 import React, { useEffect, useState } from "react";
 import AddTAsk from "../(components)/add";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useTaskCreation } from "../context/taskContext";
-import { Task } from "@/types/type";
+import EditTask from "../(components)/edit";
+import { set } from "mongoose";
 
 const Dashboard = () => {
   const router = useRouter();
-  const { userToken } = useTaskCreation();
+  const {
+    openAdd,
+    setOpenAdd,
+    tasks,
+    deleteTask,
+    completeTask,
+    openEdit,
+    setOpenEdit,
+  } = useTaskCreation();
 
-  // const Task = [
-  //   {
-  //     name: "task 1",
-  //     description: "this is task 1",
-  //     status: "pending",
-  //   },
-  //   {
-  //     name: "task 2",
-  //     description: "this is task 1",
-  //     status: "pending",
-  //   },
-  // ];
-  // console.log("token", userToken);
-  const [open, setOpen] = useState(false);
-  const [task, setTask] = useState<Task[]>([]);
+  const [status, setStatus] = useState("all");
+  const [statusIndex, setStatusIndex] = useState(0);
 
-  const getTask = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/task/taskall`,
-        {
-          headers: {
-            token,
-          },
-        }
-      );
+  const filterStatus = ["all", "pending", "completed"];
+  const [editingTaskId, setEditingTaskId] = useState<string>("");
 
-      setTask(res.data.tasks);
-      console.log(res.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  useEffect(() => {
-    getTask();
-  }, []);
+  const filteredTasks = tasks
+    .filter((task) => status === "all" || task.status === status)
+    .sort((a, b) => {
+      if (a.status === "pending" && b.status !== "pending") return -1;
+      if (a.status !== "pending" && b.status === "pending") return 1;
+      return 0;
+    });
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      router.push("/login");
+      router.push("/Login");
     }
   }, []);
-  const deleteTask = (i: number) => {
-    try {
-    } catch (error) {}
-  };
-  const editTask = (i: number) => {
-    try {
-    } catch (error) {}
-  };
-  const completeTask = (i: number) => {
-    try {
-    } catch (error) {}
-  };
 
   return (
     <div>
-      <h1 className="my-5 font-bold text-2xl capitalize">Dashboard page</h1>
-      <button
-        onClick={() => {
-          setOpen(true);
-        }}
-        className="my-20 p-4  mx-20 bg-green-500  rounded-2xl "
-      >
-        add task
-      </button>
-      <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-5  justify-center items-center max-w-7xl mx-auto border p-10 rounded-2xl">
-        {task.map((task) => (
+      <div className="flex justify-between items-center p-4 w-full my-10">
+        <button
+          onClick={() => {
+            setOpenAdd(true);
+          }}
+          className=" px-10 p-4  bg-green-500  rounded-2xl "
+        >
+          Add task
+        </button>
+
+        <div className="flex gap-5 justify-center items-center w-[350p] bg-amber-50 p-5 rounded-2xl">
+          {filterStatus.map((s, i) => (
+            <div
+              key={i}
+              className={`cursor-pointer  px-4 py-2 rounded-lg capitalize ${
+                statusIndex === i
+                  ? "bg-white text-green-600 font-bold"
+                  : "bg-black"
+              }`}
+              onClick={() => {
+                setStatus(s);
+                setStatusIndex(i);
+              }}
+            >
+              {s}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-5  justify-center items-center max-w-7xl mx-auto p-10 rounded-2xl">
+        {filteredTasks.map((task) => (
           <div
             key={task._id}
-            className="p-5  rounded-2xl bg-slate-200 text-blue-500 h-[200px]"
+            className="p-5 overflow-clip  rounded-2xl bg-slate-200 text-blue-500 h-[300px]"
           >
-            <h2>{task?.name}</h2>
-            <p className="p-4 text-2xl ">{task?.description.slice(0, 20)}</p>
+            <h2 className="font-bold whitespace-nowrap text-ellipsis mask-ellipse uppercase text-xl">
+              {task?.name}
+            </h2>
+            <p className="p-4 text-xl h-4/6 overflow-scroll font-light">
+              {task?.description}
+            </p>
 
-            <div className="flex items-center gap-3">
-              <p>{task?.status === "pending" ? "🤷‍♀️" : "🚀"}</p>
-              <button className="bg-blue-500 text-white px-4 py-2 rounded-lg">
+            <div className="flex items-center gap-3 pt-4">
+              <p className="bg-blue-500 text-white px-4 py-2 rounded-lg">
+                {task?.status === "pending" ? "🤷‍♀️" : "🚀"}
+              </p>
+              <button
+                className={`bg-blue-500 text-white px-4 py-2 rounded-lg ${
+                  task.status === "completed" &&
+                  "bg-green-500 cursor-not-allowed"
+                }`}
+                disabled={task.status === "completed"}
+                onClick={() => completeTask(task._id)}
+              >
                 ✓
               </button>
-              <button className="bg-blue-500 text-white px-4 py-2 rounded-lg">
+              <button
+                className={`bg-blue-500 text-white px-4 py-2 transition-colors duration-150 ease-in rounded-lg ${
+                  task.status === "completed" &&
+                  "bg-green-500 cursor-not-allowed"
+                }`}
+                disabled={task.status === "completed"}
+                onClick={() => {
+                  setEditingTaskId(task._id);
+                  setOpenEdit(true);
+                }}
+              >
+                ✒️
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-red-500 transition-colors duration-150 ease-in"
+                onClick={() => deleteTask(task._id)}
+              >
                 🗑️
               </button>
             </div>
           </div>
-        ))}{" "}
+        ))}
         <div
-          onClick={() => setOpen(true)}
-          className="p-5 h-[200px] rounded-2xl bg-slate-200 text-blue-500 flex items-center justify-center text-8xl cursor-pointer  "
+          onClick={() => setOpenAdd(true)}
+          className="p-5 h-[300px] rounded-2xl bg-slate-200 text-blue-500 flex items-center justify-center text-8xl cursor-pointer  hover:bg-slate-400 transition-colors duration-150 ease-in"
         >
           +
         </div>
       </div>
-      {open && <AddTAsk setOpen={setOpen} />}
+      {openAdd && <AddTAsk setOpenAdd={setOpenAdd} />}
+      {openEdit && <EditTask editingTaskId={editingTaskId} />}
     </div>
   );
 };

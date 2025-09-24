@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { TaskProvider } from "./context/taskContext";
+import Nav from "./(components)/nav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,10 +27,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased max-w-5/6 mx-auto`}
       >
         <TaskProvider>
-          <div className="">welcome to Elonatech Nigeria Limited</div>
+          <Nav />
+
           {children}
         </TaskProvider>
       </body>

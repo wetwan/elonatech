@@ -1,4 +1,4 @@
-export interface Task {
+export interface TaskProp {
     _id: string;
     name: string;
     description: string;
