@@ -91,7 +91,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     getTask();
-  }, [userToken]);
+  }, []);
 
   const addTask = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
